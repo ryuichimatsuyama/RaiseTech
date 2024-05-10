@@ -1,4 +1,9 @@
 # 第4回課題
+- セキュリティグループ作成
+  - ec2
+  ![ec2SG](images/lecture04/ec2SG.png)
+  - rds
+  ![rdsSG](images/lecture04/rdsSG.png)
 - VPC作成
   ![vpc](images/lecture04/vpc.png)
 - ec2作成
