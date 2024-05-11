@@ -3,7 +3,10 @@
   - ec2
   ![ec2SG](images/lecture04/ec2SG.png)
   - rds
-  ![rdsSG](images/lecture04/rdsSG.png)
+    - インバウンド
+    ![rdsSG](images/lecture04/DB_sg_inbound.png)
+    - アウトバウンド
+    ![rdsSG](images/lecture04/DB_sg_outbound.png)
 - VPC作成
   ![vpc](images/lecture04/vpc.png)
 - ec2作成
