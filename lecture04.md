@@ -9,6 +9,8 @@
     ![rdsSG](images/lecture04/DB_sg_outbound.png)
 - VPC作成
   ![vpc](images/lecture04/vpc.png)
+- サブネット
+  ![subnets](images/lecture04/subnets.png)
 - ec2作成
   ![ec2](images/lecture04/ec2.png)
 - rds作成
