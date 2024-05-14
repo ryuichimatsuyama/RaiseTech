@@ -11,8 +11,10 @@
 ### EC2を起動するとOK状態になります
  ![OK](images/lecture06/OK.png)
  ![SNS_ok](images/lecture06/SNS_ok.png)
+### アラーム詳細の設定
+ ![alarmSetting](images/lecture06/alarmSetting.png)
 ## 今日までに作成したリソースの内容を見積り
-https://calculator.aws/#/estimate?id=bdb1f3fae28c20319ecc4e5762205db27d096fb1
+https://calculator.aws/#/estimate?id=0f225808127d31b06aeef21c0e804bdfa2605cf5
 ## マネジメントコンソールから、現在の利用料を確認
 ![billing](images/lecture06/billing.png)
 ### EC2の料金は$0.28です。無料枠のインスタンスは使わなかったため、無料ではありません。
