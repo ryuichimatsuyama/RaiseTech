@@ -26,3 +26,5 @@
 ![role](images/lecture10/iamRole.png)
 ### 上記ロールにアタッチされたポリシー
 ![policy](images/lecture10/iamPolicy.png)
+## s3Bucket
+![s3Bucket](images/lecture10/s3Bucket.png)
