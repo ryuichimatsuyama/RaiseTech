@@ -102,7 +102,9 @@ Resources:
       Protocol: HTTP
       TargetType: instance
       VpcId: !Ref VPC
-  
+      Targets:
+        - Id: !Ref EC2Instance
+
   ALBSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
