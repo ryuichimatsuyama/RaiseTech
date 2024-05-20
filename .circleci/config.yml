@@ -23,7 +23,7 @@ jobs:
           name: Create resources with CloudFormation
           command: |
             MY_IP=$(curl -s http://checkip.amazonaws.com) 
-            aws cloudformation create-stack --stack-name $stackName --template-body cloudformation/rails.yml --parameters ParameterKey=MyIP,ParameterValue=$MY_IP/32 ParameterKey=MasterUserPassword,ParameterValue=$MasterUserPassword
+            aws cloudformation create-stack --stack-name $stackName --template-body file://cloudformation/rails.yml --parameters ParameterKey=MyIP,ParameterValue=$MY_IP/32 ParameterKey=MasterUserPassword,ParameterValue=$MasterUserPassword
       - run:
           name: Wait for CloudFormation stack to be created
           command: |
