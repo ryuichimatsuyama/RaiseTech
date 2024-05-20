@@ -43,6 +43,9 @@ jobs:
                   MasterUserPassword: $MasterUserPassword
             EOF
       - run:
+          name: Populate known_hosts
+          command: ssh-keyscan 52.55.25.243 >> ~/.ssh/known_hosts
+      - run:
           name: Install Ansible
           command: |
             sudo apt-get update
