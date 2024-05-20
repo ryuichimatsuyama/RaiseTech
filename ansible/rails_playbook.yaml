@@ -147,22 +147,19 @@
       shell: 'source ~/.bashrc'
       become: no
 
-    - name: Check if Ruby is installed
-      shell: ruby -v
-      register: ruby_version_installed
-      changed_when: false
-      ignore_errors: true
-
     - name: Install Ruby {{ ruby_version }}
-      shell: |
-        rbenv install {{ ruby_version }}
-        rbenv global {{ ruby_version }}
+      expect:
+        command: rbenv install {{ ruby_version }}
+        responses:
+          "(continue with installation? (y/N))": "n"
+      shell: rbenv global {{ ruby_version }}
       args:
         executable: /bin/bash
       environment:
         PATH: "/home/{{ ansible_user }}/.rbenv/bin:/home/{{ ansible_user }}/.rbenv/shims:{{ ansible_env.PATH }}"
       become_user: "{{ ansible_user }}"
-      when: ruby_version_installed.rc != 0
+      tags:
+        - ruby
 
     - name: Install Bundler {{ bundler_version }}
       gem:
