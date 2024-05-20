@@ -81,11 +81,11 @@ jobs:
             sudo apt-get update
             gem install bundler
             bundle config set path 'serverspec/vendor/bundle'
+            cd serverspec
             bundle install
       - run:
           name: Run ServerSpec tests
           command: |
-            cd serverspec
             bundle exec rake spec
 
 workflows:
