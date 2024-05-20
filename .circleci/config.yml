@@ -1,18 +1,102 @@
 version: 2.1
+
 orbs:
-  python: circleci/python@2.0.3
+  aws-cli: circleci/aws-cli@2.1.1
+
+executors:
+  default:
+    docker:
+      - image: circleci/python:3.8 
+
 jobs:
-  cfn-lint:
-    executor: python/default
+  setup:
+    executor: default
     steps:
       - checkout
-      - run: pip install cfn-lint
       - run:
-          name: run cfn-lint
+          name: Install Dependencies
           command: |
-            cfn-lint -i W3002 -t cloudformation/*.yml
+            sudo apt-get update
+            sudo apt-get install -y ansible
+      - aws-cli/install      
+      - run:
+          name: Create resources with CloudFormation
+          command: |
+            MY_IP=$(curl -s http://checkip.amazonaws.com) 
+            aws cloudformation create-stack --stack-name ${stackName} --template-body cloudformation/rails.yml --parameters ParameterKey=MyIP,ParameterValue=$MY_IP/32 ParameterKey=MasterUserPassword,ParameterValue=${MasterUserPassword}
+      - run:
+          name: Wait for CloudFormation stack to be created
+          command: |
+            aws cloudformation wait stack-create-complete --stack-name ${stackName}
+      - run:
+          name: Get outputs of cloudformation
+          command: |
+            echo "ALBEndpoint=$(aws cloudformation describe-stacks --stack-name ${stackName} --query 'Stacks[0].Outputs[?OutputKey==`ALBEndpoint`].OutputValue' --output text)" >> $BASH_ENV
+            echo "BucketName=$(aws cloudformation describe-stacks --stack-name ${stackName} --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)" >> $BASH_ENV
+            echo "PrivateIpAddress=$(aws cloudformation describe-stacks --stack-name ${stackName} --query 'Stacks[0].Outputs[?OutputKey==`PrivateIpAddress`].OutputValue' --output text)" >> $BASH_ENV
+            echo "RDSEndpoint=$(aws cloudformation describe-stacks --stack-name ${stackName} --query 'Stacks[0].Outputs[?OutputKey==`RDSEndpoint`].OutputValue' --output text)" >> $BASH_ENV
+            
+      - run:
+          name: Add variables to Ansible inventory
+          command: |
+            cat <<EOF > inventory.yml
+            all:
+              hosts:
+                appserver:
+                  ansible_host: $PrivateIpAddress
+                  ansible_user: ec2-user
+                  ansible_ssh_private_key_file: ~/.ssh/id_rsa
+                  region: ${region}
+                  ALBEndpoint: $ALBEndpoint
+                  BucketName: $BucketName
+                  RDSEndpoint: $RDSEndpoint
+                  MasterUserPassword: ${MasterUserPassword}
+            EOF
+      - add_ssh_keys
+
+  configure:
+    executor: default
+    steps:
+      - checkout
+      - run:
+          name: Install Middleware using Ansible
+          command: |
+            ansible-playbook -i inventory.yml ansible/rails_playbook.yaml
+
+  test:
+    docker:
+      - image: circleci/ruby:2.7
+    steps:
+      - checkout
+      - add_ssh_keys
+      - run:
+          name: Create SSH config file
+          command: |
+            echo "Host target" >> ~/.ssh/config
+            echo "    Hostname $PrivateIpAddress" >> ~/.ssh/config
+            echo "    User ec2-user" >> ~/.ssh/config
+            echo "    IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+            chmod 600 ~/.ssh/config    
+      - run:
+          name: Install bundler
+          command: |
+            sudo apt-get update
+            gem install bundler
+            bundle install --path serverspec/vendor/bundle
+      - run:
+          name: Run ServerSpec tests
+          command: |
+            cd serverspec
+            bundle exec rake spec
 
 workflows:
-  raisetech:
+  version: 2
+  deploy_and_test:
     jobs:
-      - cfn-lint
+      - setup
+      - configure:
+          requires:
+            - setup
+      - test:
+          requires:
+            - configure

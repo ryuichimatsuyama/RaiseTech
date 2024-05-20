@@ -6,6 +6,11 @@ Parameters:
     Type: String
     NoEcho: true
 
+  MyIP:
+    Type: String
+    Description: The IP address that is allowed to SSH into the EC2 instance
+    Default: "210.165.183.28/32"
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -176,7 +181,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: "210.165.183.28/32"
+          CidrIp: !Ref MyIP
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
@@ -267,3 +272,20 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub '${AWS::StackName}-S3Bucket-cfn'
+
+Outputs:
+  BucketName:
+    Description: "The name of the S3 bucket"  
+    Value: !Ref S3Bucket
+
+  PrivateIpAddress:
+    Description: "The private IP address of the EC2 instance"
+    Value: !GetAtt EC2Instance.PrivateIp            
+
+  ALBEndpoint:
+    Description: "The DNS name of the ALB"
+    Value: !GetAtt ALB.DNSName
+
+  RDSEndpoint:
+    Description: "The endpoint address of the RDS instance"
+    Value: !GetAtt RDSInstance.Endpoint.Address  
