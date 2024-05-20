@@ -39,7 +39,7 @@ jobs:
       - run:
           name: Add variables to Ansible inventory
           command: |
-            cat <<\EOF > inventory.yml
+            cat \<<EOF > inventory.yml
             all:
               hosts:
                 appserver:
