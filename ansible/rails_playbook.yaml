@@ -148,9 +148,11 @@
       become: no
 
     - name: Install Ruby {{ ruby_version }}
-      shell: |
-        echo "n" | rbenv install {{ ruby_version }}
-        rbenv global {{ ruby_version }}
+      expect:
+        command: rbenv install {{ ruby_version }}
+        responses:
+          "(continue with installation? \(y/N\))": "n"
+      shell: rbenv global {{ ruby_version }}
       args:
         executable: /bin/bash
       environment:
