@@ -151,7 +151,7 @@
       expect:
         command: rbenv install {{ ruby_version }}
         responses:
-          "(continue with installation? \(y/N\))": "n"
+          "(continue with installation? (y/N))": "n"
       shell: rbenv global {{ ruby_version }}
       args:
         executable: /bin/bash
