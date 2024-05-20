@@ -80,7 +80,7 @@ jobs:
           command: |
             sudo apt-get update
             gem install bundler
-            bundle install --path serverspec/vendor/bundle
+            bundle config set path 'serverspec/vendor/bundle'
       - run:
           name: Run ServerSpec tests
           command: |
