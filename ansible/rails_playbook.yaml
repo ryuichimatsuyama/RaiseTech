@@ -292,15 +292,6 @@
          name: ImageMagick
          state: present
 
-- name: bundle exec rake assets:precompile
-  hosts: all
-  become: no
-  tasks:
-    - name: Execute rake assets:precompile
-      shell:
-         cmd: bundle exec rake assets:precompile
-         chdir: /home/ec2-user/raisetech-live8-sample-app
-
 - name: Deploy Puma service
   hosts: all
   become: no
@@ -316,16 +307,16 @@
 
     - name: Execute rake assets:precompile
       shell:
-        cmd: RAILS_ENV=development bundle exec rake assets:precompile
+        cmd: bundle exec rake assets:precompile
         chdir: /home/ec2-user/raisetech-live8-sample-app    
 
-- name: start Puma service
+- name: restart Puma service
   hosts: all
   become: yes
 
   tasks:
-    - name: start Puma service
+    - name: restart Puma service
       systemd:
         name: puma
-        state: started
+        state: restarted
         enabled: yes
