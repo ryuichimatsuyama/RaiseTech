@@ -58,8 +58,10 @@ jobs:
           fingerprints:
             - "SHA256:zlZVEZaepozVE6oteYFJDkqzzWmPrFA9fvAQBF+dGME"
       - run:
-          name: Populate known_hosts
-          command: ssh-keyscan $PublicIpAddress >> ~/.ssh/known_hosts
+          name: Create ansible.cfg
+          command: |
+            echo '[defaults]' > ansible.cfg
+            echo 'host_key_checking = False' >> ansible.cfg
       - run:
           name: Install Middleware using Ansible
           command: |
