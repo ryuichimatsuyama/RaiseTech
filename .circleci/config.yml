@@ -9,7 +9,7 @@ executors:
       - image: circleci/python:3.8 
 
 jobs:
-  setup:
+  setupAndConfigure:
     executor: default
     steps:
       - checkout
@@ -26,11 +26,6 @@ jobs:
             echo "BucketName=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)" >> $BASH_ENV
             echo "PrivateIpAddress=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`PrivateIpAddress`].OutputValue' --output text)" >> $BASH_ENV
             echo "RDSEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`RDSEndpoint`].OutputValue' --output text)" >> $BASH_ENV
-
-  configure:
-    executor: default
-    steps:
-      - checkout
       - run:
           name: Add variables to Ansible inventory
           command: |
@@ -40,7 +35,7 @@ jobs:
                 appserver:
                   ansible_host: $PrivateIpAddress
                   ansible_user: ec2-user
-                  ansible_ssh_private_key_file: ~/.ssh/id_rsa_ea:26:51:2b:86:29:dc:5b:4c:53:72:c4:df:8e:a5:90
+                  ansible_ssh_private_key_file: ~/.ssh/id_rsa
                   region: $AWS_DEFAULT_REGION
                   ALBEndpoint: $ALBEndpoint
                   BucketName: $BucketName
