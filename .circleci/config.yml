@@ -81,6 +81,7 @@ jobs:
             sudo apt-get update
             gem install bundler
             bundle config set path 'serverspec/vendor/bundle'
+            bundle install
       - run:
           name: Run ServerSpec tests
           command: |
