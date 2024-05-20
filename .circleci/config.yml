@@ -13,12 +13,21 @@ jobs:
     executor: default
     steps:
       - checkout
-      - aws-cli/install      
+      - aws-cli/install
       - run:
           name: Create resources with CloudFormation
           command: |
             MY_IP=$(curl -s http://checkip.amazonaws.com) 
             aws cloudformation deploy --stack-name $stackName --template-file cloudformation/rails.yml --parameter-overrides MyIP=$MY_IP/32 MasterUserPassword=$MasterUserPassword --capabilities CAPABILITY_NAMED_IAM
+  test:
+    docker:
+      - image: circleci/ruby:3.0.2
+    steps:
+      - checkout
+      - aws-cli/install
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:zlZVEZaepozVE6oteYFJDkqzzWmPrFA9fvAQBF+dGME"
       - run:
           name: Get outputs of cloudformation
           command: |
@@ -42,9 +51,6 @@ jobs:
                   RDSEndpoint: $RDSEndpoint
                   MasterUserPassword: $MasterUserPassword
             EOF
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:zlZVEZaepozVE6oteYFJDkqzzWmPrFA9fvAQBF+dGME"
       - run:
           name: Populate known_hosts
           command: ssh-keyscan $PublicIpAddress >> ~/.ssh/known_hosts
@@ -58,15 +64,6 @@ jobs:
           name: Install Middleware using Ansible
           command: |
             ansible-playbook -i inventory.yml ansible/rails_playbook.yaml --skip-tags ruby
-
-  test:
-    docker:
-      - image: circleci/ruby:3.0.2
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints:
-            - "SHA256:zlZVEZaepozVE6oteYFJDkqzzWmPrFA9fvAQBF+dGME"
       - run:
           name: Create SSH config file
           command: |
