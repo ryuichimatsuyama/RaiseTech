@@ -13,12 +13,6 @@ jobs:
     executor: default
     steps:
       - checkout
-      - run:
-          name: Install Dependencies
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y python3-pip
-            pip3 install ansible
       - aws-cli/install      
       - run:
           name: Create resources with CloudFormation
@@ -32,7 +26,11 @@ jobs:
             echo "BucketName=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)" >> $BASH_ENV
             echo "PrivateIpAddress=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`PrivateIpAddress`].OutputValue' --output text)" >> $BASH_ENV
             echo "RDSEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`RDSEndpoint`].OutputValue' --output text)" >> $BASH_ENV
-            
+
+  configure:
+    executor: default
+    steps:
+      - checkout
       - run:
           name: Add variables to Ansible inventory
           command: |
@@ -49,12 +47,6 @@ jobs:
                   RDSEndpoint: $RDSEndpoint
                   MasterUserPassword: $MasterUserPassword
             EOF
-      - add_ssh_keys
-
-  configure:
-    executor: default
-    steps:
-      - checkout
       - run:
           name: Install Ansible
           command: |
@@ -85,7 +77,7 @@ jobs:
           name: Install bundler
           command: |
             sudo apt-get update
-            gem install bundler
+            gem install bundler -v 2.4.22
             bundle install --path serverspec/vendor/bundle
       - run:
           name: Run ServerSpec tests
