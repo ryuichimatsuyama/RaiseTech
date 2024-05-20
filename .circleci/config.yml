@@ -57,7 +57,7 @@ jobs:
       - run:
           name: Install Middleware using Ansible
           command: |
-            ansible-playbook -i inventory.yml ansible/rails_playbook.yaml
+            ansible-playbook -i inventory.yml ansible/rails_playbook.yam --skip-tags ruby
 
   test:
     docker:
