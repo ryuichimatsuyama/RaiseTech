@@ -17,17 +17,14 @@ jobs:
           name: Install Dependencies
           command: |
             sudo apt-get update
-            sudo apt-get install -y ansible
+            sudo apt-get install -y python3-pip sshpass
+            pip3 install ansible
       - aws-cli/install      
       - run:
           name: Create resources with CloudFormation
           command: |
             MY_IP=$(curl -s http://checkip.amazonaws.com) 
-            aws cloudformation create-stack --stack-name $stackName --template-body file://cloudformation/rails.yml --parameters ParameterKey=MyIP,ParameterValue=$MY_IP/32 ParameterKey=MasterUserPassword,ParameterValue=$MasterUserPassword --capabilities CAPABILITY_NAMED_IAM
-      - run:
-          name: Wait for CloudFormation stack to be created
-          command: |
-            aws cloudformation wait stack-create-complete --stack-name $stackName
+            aws cloudformation deploy --stack-name $stackName --template-file cloudformation/rails.yml --parameter-overrides MyIP=$MY_IP/32 MasterUserPassword=$MasterUserPassword --capabilities CAPABILITY_NAMED_IAM
       - run:
           name: Get outputs of cloudformation
           command: |
