@@ -35,7 +35,7 @@ jobs:
                 appserver:
                   ansible_host: $PrivateIpAddress
                   ansible_user: ec2-user
-                  ansible_ssh_private_key_file: ~/.ssh/id_rsa
+                  ansible_ssh_private_key_file: ~/.ssh/id_rsa_ea:26:51:2b:86:29:dc:5b:4c:53:72:c4:df:8e:a5:90
                   region: $AWS_DEFAULT_REGION
                   ALBEndpoint: $ALBEndpoint
                   BucketName: $BucketName
@@ -66,7 +66,7 @@ jobs:
             echo "Host target" >> ~/.ssh/config
             echo "    Hostname $PrivateIpAddress" >> ~/.ssh/config
             echo "    User ec2-user" >> ~/.ssh/config
-            echo "    IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+            echo "    IdentityFile ~/.ssh/id_rsa_ea:26:51:2b:86:29:dc:5b:4c:53:72:c4:df:8e:a5:90" >> ~/.ssh/config
             chmod 600 ~/.ssh/config    
       - run:
           name: Install bundler
