@@ -152,6 +152,7 @@
       register: ruby_version_installed
       changed_when: false
       ignore_errors: true
+      become: no
 
     - name: Install Ruby {{ ruby_version }}
       shell: |
