@@ -52,14 +52,14 @@ jobs:
                   MasterUserPassword: $MasterUserPassword
             EOF
       - run:
-          name: Populate known_hosts
-          command: ssh-keyscan $PublicIpAddress >> ~/.ssh/known_hosts
-      - run:
           name: Install Ansible
           command: |
             sudo apt-get update
             sudo apt-get install -y python3-pip
             pip3 install ansible
+      - run:
+          name: Populate known_hosts
+          command: ssh-keyscan $PublicIpAddress >> ~/.ssh/known_hosts
       - run:
           name: Install Middleware using Ansible
           command: |
