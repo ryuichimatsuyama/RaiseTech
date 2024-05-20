@@ -149,9 +149,7 @@
 
     - name: Install Ruby {{ ruby_version }}
       shell: |
-        export NVM_DIR="/home/{{ ansible_user }}/.rbenv"
-        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-        rbenv install {{ ruby_version }}
+        echo "n" | rbenv install {{ ruby_version }}
         rbenv global {{ ruby_version }}
       args:
         executable: /bin/bash
