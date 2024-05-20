@@ -9,7 +9,7 @@ executors:
       - image: circleci/python:3.8 
 
 jobs:
-  setupAndConfigure:
+  deploy:
     executor: default
     steps:
       - checkout
@@ -84,10 +84,7 @@ workflows:
   version: 2
   deploy_and_test:
     jobs:
-      - setup
-      - configure:
-          requires:
-            - setup
+      - deploy
       - test:
           requires:
-            - configure
+            - deploy
