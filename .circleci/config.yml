@@ -17,7 +17,7 @@ jobs:
           name: Install Dependencies
           command: |
             sudo apt-get update
-            sudo apt-get install -y python3-pip sshpass
+            sudo apt-get install -y python3-pip
             pip3 install ansible
       - aws-cli/install      
       - run:
@@ -55,6 +55,13 @@ jobs:
     executor: default
     steps:
       - checkout
+      - run:
+          name: Install Ansible
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y python3-pip
+            pip3 install ansible
+      - add_ssh_keys
       - run:
           name: Install Middleware using Ansible
           command: |
