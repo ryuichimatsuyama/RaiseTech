@@ -278,9 +278,9 @@ Outputs:
     Description: "The name of the S3 bucket"  
     Value: !Ref S3Bucket
 
-  PrivateIpAddress:
-    Description: "The private IP address of the EC2 instance"
-    Value: !GetAtt EC2Instance.PrivateIp            
+  PublicIpAddress:
+    Description: "The public IP address of the EC2 instance"
+    Value: !GetAtt EC2Instance.PublicIp
 
   ALBEndpoint:
     Description: "The DNS name of the ALB"
