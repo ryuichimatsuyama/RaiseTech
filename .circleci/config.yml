@@ -63,7 +63,7 @@ jobs:
       - run:
           name: Install Middleware using Ansible
           command: |
-            ansible-playbook -i inventory.yml ansible/rails_playbook.yaml --skip-tags ruby
+            ansible-playbook -i inventory.yml ansible/rails_playbook.yaml
       - run:
           name: Create SSH config file
           command: |
