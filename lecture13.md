@@ -6,9 +6,16 @@
   4. MasterUserPassword(rdsのパスワード)
   5. stackName(cloudformationのスタック名)
 ## CircleCI実行結果
-- deployというジョブが成功しています。
-  ![job](images/lecture13/job.png)
-  ![steps](images/lecture13/steps.png)
+- ワークフロー
+  ![workflow](images/lecture13/workflow.png)
+- cfn-lintというジョブが成功しています。
+  ![cfn-lint](images/lecture13/cfn-lint.png)
+- setupというジョブが成功しています。
+  ![setup](images/lecture13/setup.png)
+- configureというジョブが成功しています。
+  ![configure](images/lecture13/configure.png)
+- testというジョブが成功しています。
+  ![test](images/lecture13/test.png)
 ## アプリケーションの動作確認
 - 動作できています。
   ![app](images/lecture13/app.png)
