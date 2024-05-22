@@ -8,12 +8,12 @@ commands:
   get_outputs_cloudformation:
     steps:
       - run:
-        name: Get outputs of cloudformation
-        command: |
-          echo "ALBEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`ALBEndpoint`].OutputValue' --output text)" >> $BASH_ENV
-          echo "BucketName=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)" >> $BASH_ENV
-          echo "PublicIpAddress=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`PublicIpAddress`].OutputValue' --output text)" >> $BASH_ENV
-          echo "RDSEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`RDSEndpoint`].OutputValue' --output text)" >> $BASH_ENV
+          name: Get outputs of cloudformation
+          command: |
+            echo "ALBEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`ALBEndpoint`].OutputValue' --output text)" >> $BASH_ENV
+            echo "BucketName=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)" >> $BASH_ENV
+            echo "PublicIpAddress=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`PublicIpAddress`].OutputValue' --output text)" >> $BASH_ENV
+            echo "RDSEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`RDSEndpoint`].OutputValue' --output text)" >> $BASH_ENV
 
 jobs:
   cfn-lint:
