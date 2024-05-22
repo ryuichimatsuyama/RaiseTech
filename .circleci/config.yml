@@ -39,7 +39,7 @@ jobs:
 
   configure:
     executor: python/default
-      steps:
+    steps:
       - checkout
       - aws-cli/install
       - get_outputs_cloudformation
