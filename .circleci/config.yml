@@ -14,6 +14,13 @@ commands:
             echo "BucketName=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)" >> $BASH_ENV
             echo "PublicIpAddress=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`PublicIpAddress`].OutputValue' --output text)" >> $BASH_ENV
             echo "RDSEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`RDSEndpoint`].OutputValue' --output text)" >> $BASH_ENV
+  create_resources_cloudformation:
+    steps:
+      - run:
+          name: Create resources with CloudFormation
+          command: |
+            MY_IP=$(curl -s http://checkip.amazonaws.com) 
+            aws cloudformation deploy --stack-name $stackName --template-file cloudformation/rails.yml --parameter-overrides MyIP=$MY_IP/32 MasterUserPassword=$MasterUserPassword --capabilities CAPABILITY_NAMED_IAM
 
 jobs:
   cfn-lint:
@@ -31,17 +38,13 @@ jobs:
     steps:
       - checkout
       - aws-cli/install
-      - run:
-          name: Create resources with CloudFormation
-          command: |
-            MY_IP=$(curl -s http://checkip.amazonaws.com) 
-            aws cloudformation deploy --stack-name $stackName --template-file cloudformation/rails.yml --parameter-overrides MyIP=$MY_IP/32 MasterUserPassword=$MasterUserPassword --capabilities CAPABILITY_NAMED_IAM
-
+      - create_resources_cloudformation
   configure:
     executor: python/default
     steps:
       - checkout
       - aws-cli/install
+      - create_resources_cloudformation
       - get_outputs_cloudformation
       - run:
           name: Add variables to Ansible inventory
@@ -84,6 +87,7 @@ jobs:
     steps:
       - checkout
       - aws-cli/install
+      - create_resources_cloudformation
       - get_outputs_cloudformation
       - add_ssh_keys:
           fingerprints:
