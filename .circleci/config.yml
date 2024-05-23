@@ -39,7 +39,7 @@ jobs:
       - checkout
       - run: pip install cfn-lint
       - run:
-          name: rungcfn-lint
+          name: run cfn-lint
           command: |
             cfn-lint -i W3002 -t cloudformation/*.yml
 
