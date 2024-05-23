@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  MyIP:
+    Type: String
+    Description: The IP address that is allowed to SSH into the EC2 instance
+    Default: "210.165.183.28/32"
+
+Resources:
+  EC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for EC2 instance
+      VpcId: !ImportValue VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref MyIP
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !Ref ALBSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-EC2SecurityGroup-cfn'
+
+  RDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for RDS instance
+      VpcId: !ImportValue VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3306
+          ToPort: 3306
+          SourceSecurityGroupId: !Ref EC2SecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-RDSSecurityGroup-cfn'
+
+  ALBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for ALB
+      VpcId: !ImportValue VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+      Tags:
+        - Key: Name
+          Value: !Sub '${AWS::StackName}-ALBSecurityGroup-cfn'
+
+Outputs:
+  EC2SecurityGroup:
+    Description: "The security group of the EC2"
+    Value: !Ref EC2SecurityGroup
+    Export:
+      Name: EC2SecurityGroup
+
+  RDSSecurityGroup:
+    Description: "The security group of the RDS"
+    Value: !Ref RDSSecurityGroup
+    Export:
+      Name: RDSSecurityGroup
+
+  ALBSecurityGroup:
+    Description: "The security group of the ALB"
+    Value: !Ref ALBSecurityGroup
+    Export:
+      Name: ALBSecurityGroup
