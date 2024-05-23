@@ -30,7 +30,7 @@ commands:
           name: update security group EC2
           command: |
             MY_IP=$(curl -s http://checkip.amazonaws.com)
-          　aws cloudformation update-stack --stack-name SecurityGroup --template-body file://cloudformation/SecurityGroup.yml --parameters ParameterKey=MyIP,ParameterValue=$MY_IP/32
+            aws cloudformation update-stack --stack-name SecurityGroup --template-body file://cloudformation/SecurityGroup.yml --parameters ParameterKey=MyIP,ParameterValue=$MY_IP/32
 
 jobs:
   cfn-lint:
