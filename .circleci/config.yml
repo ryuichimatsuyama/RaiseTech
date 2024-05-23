@@ -14,13 +14,23 @@ commands:
             echo "BucketName=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)" >> $BASH_ENV
             echo "PublicIpAddress=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`PublicIpAddress`].OutputValue' --output text)" >> $BASH_ENV
             echo "RDSEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`RDSEndpoint`].OutputValue' --output text)" >> $BASH_ENV
+
   create_resources_cloudformation:
     steps:
       - run:
           name: Create resources with CloudFormation
           command: |
-            MY_IP=$(curl -s http://checkip.amazonaws.com) 
-            aws cloudformation deploy --stack-name $stackName --template-file cloudformation/rails.yml --parameter-overrides MyIP=$MY_IP/32 MasterUserPassword=$MasterUserPassword --capabilities CAPABILITY_NAMED_IAM
+            aws cloudformation deploy --stack-name vpc --template-file cloudformation/vpc.yml
+            aws cloudformation deploy --stack-name SecurityGroup --template-file cloudformation/SecurityGroup.yml
+            aws cloudformation deploy --stack-name $stackName --template-file cloudformation/rails.yml --parameter-overrides MasterUserPassword=$MasterUserPassword --capabilities CAPABILITY_NAMED_IAM
+　
+  update_securityGroup_EC2:
+    steps:
+      - run:
+          name: update security group EC2
+          command: |
+          MY_IP=$(curl -s http://checkip.amazonaws.com)
+          aws cloudformation update-stack --stack-name SecurityGroup --template-body file://cloudformation/SecurityGroup.yml --parameters ParameterKey=MyIP,ParameterValue=$MY_IP/32
 
 jobs:
   cfn-lint:
@@ -39,12 +49,13 @@ jobs:
       - checkout
       - aws-cli/install
       - create_resources_cloudformation
+
   configure:
     executor: python/default
     steps:
       - checkout
       - aws-cli/install
-      - create_resources_cloudformation
+      - update_securityGroup_EC2
       - get_outputs_cloudformation
       - run:
           name: Add variables to Ansible inventory
@@ -87,7 +98,7 @@ jobs:
     steps:
       - checkout
       - aws-cli/install
-      - create_resources_cloudformation
+      - update_securityGroup_EC2
       - get_outputs_cloudformation
       - add_ssh_keys:
           fingerprints:
