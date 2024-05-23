@@ -24,7 +24,7 @@ commands:
             aws cloudformation deploy --stack-name SecurityGroup --template-file cloudformation/SecurityGroup.yml
             aws cloudformation deploy --stack-name $stackName --template-file cloudformation/rails.yml --parameter-overrides MasterUserPassword=$MasterUserPassword --capabilities CAPABILITY_NAMED_IAM
 
-  update_securityGroup_EC2:
+  update_securityGroup_ec2:
     steps:
       - run:
           name: update security group EC2
@@ -55,7 +55,7 @@ jobs:
     steps:
       - checkout
       - aws-cli/install
-      - update_securityGroup_EC2
+      - update_securityGroup_ec2
       - get_outputs_cloudformation
       - run:
           name: Add variables to Ansible inventory
@@ -98,7 +98,7 @@ jobs:
     steps:
       - checkout
       - aws-cli/install
-      - update_securityGroup_EC2
+      - update_securityGroup_ec2
       - get_outputs_cloudformation
       - add_ssh_keys:
           fingerprints:
