@@ -23,7 +23,7 @@ commands:
             aws cloudformation deploy --stack-name vpc --template-file cloudformation/vpc.yml
             aws cloudformation deploy --stack-name SecurityGroup --template-file cloudformation/SecurityGroup.yml
             aws cloudformation deploy --stack-name $stackName --template-file cloudformation/rails.yml --parameter-overrides MasterUserPassword=$MasterUserPassword --capabilities CAPABILITY_NAMED_IAM
-　
+
   update_securityGroup_EC2:
     steps:
       - run:
