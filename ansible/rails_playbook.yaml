@@ -1,0 +1,326 @@
+---
+- name: Install Git and clone a repository
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install Git
+      yum:
+        name: git
+        state: present
+
+- name: Clone a Git repository
+  hosts: all
+  tasks:
+    - name: Ensure the destination directory exists
+      file:
+        path: "/home/{{ ansible_user }}"
+        state: directory
+
+    - name: Clone the Git repository
+      ansible.builtin.git:
+        repo: 'https://github.com/yuta-ushijima/raisetech-live8-sample-app.git'
+        dest: "/home/{{ ansible_user }}/raisetech-live8-sample-app"
+        version: 'main'
+        force: yes
+
+- name: Install NVM and Node.js 
+  hosts: all
+  become: yes
+
+  vars:
+    nvm_version: v0.39.1  
+    node_version: 17.9.1
+    yarn_version: 1.22.19
+
+  tasks:
+
+    - name: Install dependencies for NVM
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - curl
+        - gcc-c++
+        - make
+
+    - name: Download and install NVM
+      shell: >
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/{{ nvm_version }}/install.sh | bash
+      args:
+        executable: /bin/bash
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+        USER: "{{ ansible_user }}"
+      become_user: "{{ ansible_user }}"
+
+    - name: Source NVM script and install Node.js
+      shell: |
+        export NVM_DIR="/home/{{ ansible_user }}/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        nvm install {{ node_version }}
+        nvm alias default {{ node_version }}
+      args:
+        executable: /bin/bash
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+        USER: "{{ ansible_user }}"
+      become_user: "{{ ansible_user }}"
+
+    - name: Source NVM script to ensure npm is in PATH
+      shell: |
+        export NVM_DIR="/home/{{ ansible_user }}/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        npm install -g yarn@{{ yarn_version }}
+      args:
+        executable: /bin/bash
+      environment:
+        HOME: "/home/{{ ansible_user }}"
+        USER: "{{ ansible_user }}"
+      become_user: "{{ ansible_user }}"
+
+    - name: Run yarn install
+      command: yarn install
+      args:
+        chdir: "/home/{{ ansible_user }}/raisetech-live8-sample-app"
+      become_user: "{{ ansible_user }}" 
+
+- name: Install Ruby on Rails 7.1.3.2
+  hosts: all
+  become: yes
+  tags: 
+    - ruby
+
+  vars:
+    ruby_version: 3.2.3 
+    rails_version: 7.1.3.2
+    bundler_version: 2.3.14
+
+  tasks:
+    - name: Install dependencies for building Ruby 
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - gcc
+        - openssl-devel
+        - readline-devel
+        - zlib-devel
+        - libffi-devel
+        - libffi
+        - libyaml-devel
+        - gdbm-devel
+        - ncurses-devel
+        - readline-devel
+        - libdb-devel
+        - libdb
+        - xz-devel
+
+    - name: Install rbenv and ruby-build
+      git:
+        repo: "https://github.com/rbenv/rbenv.git"
+        dest: "/home/{{ ansible_user }}/.rbenv"
+        update: no
+      become: no
+
+    - name: Install ruby-build plugin for rbenv
+      git:
+        repo: "https://github.com/rbenv/ruby-build.git"
+        dest: "/home/{{ ansible_user }}/.rbenv/plugins/ruby-build"
+        update: no
+      become: no
+
+    - name: Add rbenv to bash profile
+      lineinfile:
+        path: "/home/{{ ansible_user }}/.bashrc"
+        line: 'export PATH="$HOME/.rbenv/bin:$PATH"'
+        create: yes
+      become: no
+
+    - name: Add rbenv init to bash profile
+      lineinfile:
+        path: "/home/{{ ansible_user }}/.bashrc"
+        line: 'eval "$(rbenv init -)"'
+        create: yes
+      become: no
+
+    - name: Restart shell to load rbenv
+      shell: 'source ~/.bashrc'
+      become: no
+
+    - name: Check if Ruby is installed
+      shell: ruby -v
+      register: ruby_version_installed
+      changed_when: false
+      ignore_errors: true
+      become: no
+
+    - name: Install Ruby {{ ruby_version }}
+      shell: |
+        rbenv install {{ ruby_version }}
+        rbenv global {{ ruby_version }}
+      args:
+        executable: /bin/bash
+      environment:
+        PATH: "/home/{{ ansible_user }}/.rbenv/bin:/home/{{ ansible_user }}/.rbenv/shims:{{ ansible_env.PATH }}"
+      become_user: "{{ ansible_user }}"
+      when: ruby_version_installed.rc != 0
+
+    - name: Install Bundler {{ bundler_version }}
+      gem:
+        name: bundler
+        version: "{{ bundler_version }}"
+        state: present
+      environment:
+        PATH: "/home/{{ ansible_user }}/.rbenv/bin:/home/{{ ansible_user }}/.rbenv/shims:{{ ansible_env.PATH }}"
+
+    - name: Install Rails {{ rails_version }}
+      gem:
+        name: rails
+        version: "{{ rails_version }}"
+        state: present
+      environment:
+        PATH: "/home/{{ ansible_user }}/.rbenv/bin:/home/{{ ansible_user }}/.rbenv/shims:{{ ansible_env.PATH }}"
+
+- name: Install and configure MySQL
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update yum
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Remove MariaDB
+      yum:
+        name: '*mariadb*'
+        state: absent
+      ignore_errors: yes
+
+    - name: Install MySQL repository package
+      yum:
+        name: "https://repo.mysql.com/mysql80-community-release-el7.rpm"
+        state: present
+
+    - name: Install MySQL community packages
+      yum:
+        name:
+          - mysql-community-devel
+          - mysql-community-server
+        state: latest
+
+    - name: Start MySQL service
+      service:
+        name: mysqld
+        state: started
+
+    - name: Deploy database.yaml
+      template:
+         src: templates/database.yml.j2
+         dest: "/home/{{ ansible_user }}/raisetech-live8-sample-app/config/database.yml"
+
+- name: Execute bin/setup
+  hosts: all
+  become: no
+  tags:
+    - setup
+
+  tasks:
+    - name: Execute bin/setup script
+      command: "/home/{{ ansible_user }}/raisetech-live8-sample-app/bin/setup"
+      args:
+        chdir: "/home/{{ ansible_user }}/raisetech-live8-sample-app"
+
+- name: Install nginx 
+  hosts: all
+  become: yes
+  tasks:
+    - name: Execute the command to install nginx
+      command:
+        cmd: amazon-linux-extras install nginx1 -y
+        chdir: /home/ec2-user/raisetech-live8-sample-app
+
+    - name: Ensure Nginx is running and enabled
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+       
+- name: deploy files
+  hosts: all
+  become: yes
+
+  tasks: 
+    - name: Deploy nginx.conf
+      template:
+         src: templates/nginx.conf.j2
+         dest: "/etc/nginx/nginx.conf"
+      notify: Restart Nginx   
+
+    - name: Change owner of the directory and its contents
+      file:
+        path: /var/lib/nginx
+        owner: ec2-user
+        recurse: yes  
+
+    - name: Deploy development.rb
+      template:
+         src: templates/development.rb.j2
+         dest: "/home/{{ ansible_user }}/raisetech-live8-sample-app/config/environments/development.rb"     
+
+    - name: Deploy storage.yml
+      template:
+         src: templates/storage.yml.j2
+         dest: "/home/{{ ansible_user }}/raisetech-live8-sample-app/config/storage.yml"     
+
+    - name: Deploy puma.service
+      template:
+         src: templates/puma.service.j2
+         dest: "/etc/systemd/system/puma.service"
+
+    - name: Deploy application.rb
+      template:
+         src: templates/application.rb.j2
+         dest: "/home/{{ ansible_user }}/raisetech-live8-sample-app/config/application.rb"  
+  handlers:
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted  
+
+- name: Install ImageMagick
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install ImageMagick
+      yum:
+         name: ImageMagick
+         state: present
+
+- name: Deploy Puma service
+  hosts: all
+  become: no
+
+  tasks:
+    - name: Set up application directory structure
+      file:
+        path: "/home/ec2-user/raisetech-live8-sample-app/{{ item }}"
+        state: directory
+      loop:
+        - tmp/sockets
+        - tmp/pids
+
+    - name: Execute rake assets:precompile
+      shell:
+        cmd: bundle exec rake assets:precompile
+        chdir: /home/ec2-user/raisetech-live8-sample-app    
+
+- name: restart Puma service
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: restart Puma service
+      systemd:
+        name: puma
+        state: restarted
+        enabled: yes

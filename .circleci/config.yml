@@ -1,6 +1,37 @@
 version: 2.1
+
 orbs:
+  aws-cli: circleci/aws-cli@4.1.3
   python: circleci/python@2.0.3
+
+commands:
+  get_outputs_cloudformation:
+    steps:
+      - run:
+          name: Get outputs of cloudformation
+          command: |
+            echo "ALBEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`ALBEndpoint`].OutputValue' --output text)" >> $BASH_ENV
+            echo "BucketName=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)" >> $BASH_ENV
+            echo "PublicIpAddress=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`PublicIpAddress`].OutputValue' --output text)" >> $BASH_ENV
+            echo "RDSEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`RDSEndpoint`].OutputValue' --output text)" >> $BASH_ENV
+
+  create_resources_cloudformation:
+    steps:
+      - run:
+          name: Create resources with CloudFormation
+          command: |
+            aws cloudformation deploy --stack-name vpc --template-file cloudformation/vpc.yml
+            aws cloudformation deploy --stack-name SecurityGroup --template-file cloudformation/SecurityGroup.yml
+            aws cloudformation deploy --stack-name $stackName --template-file cloudformation/rails.yml --parameter-overrides MasterUserPassword=$MasterUserPassword --capabilities CAPABILITY_NAMED_IAM
+
+  update_securitygroup_ec2:
+    steps:
+      - run:
+          name: update security group EC2
+          command: |
+            MY_IP=$(curl -s http://checkip.amazonaws.com)
+            aws cloudformation update-stack --stack-name SecurityGroup --template-body file://cloudformation/SecurityGroup.yml --parameters ParameterKey=MyIP,ParameterValue=$MY_IP/32
+
 jobs:
   cfn-lint:
     executor: python/default
@@ -12,7 +43,99 @@ jobs:
           command: |
             cfn-lint -i W3002 -t cloudformation/*.yml
 
+  setup:
+    executor: python/default
+    steps:
+      - checkout
+      - aws-cli/install
+      - create_resources_cloudformation
+
+  configure:
+    executor: python/default
+    steps:
+      - checkout
+      - aws-cli/install
+      - update_securitygroup_ec2
+      - get_outputs_cloudformation
+      - run:
+          name: Add variables to Ansible inventory
+          command: |
+            cat \<<EOF > inventory.yml
+            all:
+              hosts:
+                appserver:
+                  ansible_host: $PublicIpAddress
+                  ansible_user: ec2-user
+                  ansible_ssh_private_key_file: ~/.ssh/id_rsa
+                  region: $AWS_DEFAULT_REGION
+                  ALBEndpoint: $ALBEndpoint
+                  BucketName: $BucketName
+                  RDSEndpoint: $RDSEndpoint
+                  MasterUserPassword: $MasterUserPassword
+            EOF
+      - run:
+          name: Install Ansible
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y python3-pip
+            pip3 install ansible
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:zlZVEZaepozVE6oteYFJDkqzzWmPrFA9fvAQBF+dGME"
+      - run:
+          name: Create ansible.cfg
+          command: |
+            echo '[defaults]' > ansible.cfg
+            echo 'host_key_checking = False' >> ansible.cfg
+      - run:
+          name: Install Middleware using Ansible
+          command: |
+            ansible-playbook -i inventory.yml ansible/rails_playbook.yaml
+
+  test:
+    docker:
+      - image: circleci/ruby:3.0.2
+    steps:
+      - checkout
+      - aws-cli/install
+      - update_securitygroup_ec2
+      - get_outputs_cloudformation
+      - add_ssh_keys:
+          fingerprints:
+            - "SHA256:zlZVEZaepozVE6oteYFJDkqzzWmPrFA9fvAQBF+dGME"
+      - run:
+          name: Create SSH config file
+          command: |
+            echo "Host target" >> ~/.ssh/config
+            echo "    Hostname $PublicIpAddress" >> ~/.ssh/config
+            echo "    User ec2-user" >> ~/.ssh/config
+            echo "    IdentityFile ~/.ssh/id_rsa" >> ~/.ssh/config
+            chmod 600 ~/.ssh/config    
+      - run:
+          name: Install bundler
+          command: |
+            sudo apt-get update
+            gem install bundler
+            bundle config set path 'serverspec/vendor/bundle'
+            cd serverspec
+            bundle install
+      - run:
+          name: Run ServerSpec tests
+          command: |
+            cd serverspec
+            bundle exec rake spec
+
 workflows:
-  raisetech:
+  version: 2
+  deploy_and_test:
     jobs:
       - cfn-lint
+      - setup:
+          requires:
+            - cfn-lint
+      - configure:
+          requires:
+            - setup
+      - test:
+          requires:
+            - configure
