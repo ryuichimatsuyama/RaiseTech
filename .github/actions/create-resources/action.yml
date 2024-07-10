@@ -1,0 +1,34 @@
+name: 'create resources of aws'
+
+description: 'create resources of aws using cloudFormation'
+
+inputs:
+  AWS_ACCESS_KEY_ID:
+    required: true
+  AWS_SECRET_ACCESS_KEY:
+    required: true
+  AWS_DEFAULT_REGION:
+    required: true
+  MasterUserPassword:
+    required: true
+  stackName:
+    required: true
+  
+runs:
+  using: 'composite'
+  steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ inputs.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.AWS_DEFAULT_REGION }}
+    - name: create resources of aws
+      shell: bash
+      env: 
+        MasterUserPassword: ${{ inputs.MasterUserPassword }}
+        stackName: ${{ inputs.stackName }}
+      run: |
+        aws cloudformation deploy --stack-name vpc --template-file cloudformation/vpc.yml
+        aws cloudformation deploy --stack-name SecurityGroup --template-file cloudformation/SecurityGroup.yml
+        aws cloudformation deploy --stack-name $stackName --template-file cloudformation/rails.yml --parameter-overrides MasterUserPassword=$MasterUserPassword --capabilities CAPABILITY_NAMED_IAM

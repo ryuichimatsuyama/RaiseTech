@@ -1,0 +1,32 @@
+name: 'get output of cloudFormation'
+
+description: 'get output of cloudFormation'
+
+inputs:
+  AWS_ACCESS_KEY_ID:
+    required: true
+  AWS_SECRET_ACCESS_KEY:
+    required: true
+  AWS_DEFAULT_REGION:
+    required: true
+  stackName:
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ inputs.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ inputs.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ inputs.AWS_DEFAULT_REGION }}
+    - name: Get outputs of cloudformation
+      shell: bash
+      env: 
+        stackName: ${{ inputs.stackName }}
+      run: |
+        echo "ALBEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`ALBEndpoint`].OutputValue' --output text)" >> $GITHUB_ENV
+        echo "BucketName=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`BucketName`].OutputValue' --output text)" >> $GITHUB_ENV
+        echo "PublicIpAddress=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`PublicIpAddress`].OutputValue' --output text)" >> $GITHUB_ENV
+        echo "RDSEndpoint=$(aws cloudformation describe-stacks --stack-name $stackName --query 'Stacks[0].Outputs[?OutputKey==`RDSEndpoint`].OutputValue' --output text)" >> $GITHUB_ENV
