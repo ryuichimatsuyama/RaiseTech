@@ -70,10 +70,10 @@ jobs:
           mkdir -p ~/.ssh
           echo "$EC2_SSH_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-      # - name: Create ansible.cfg
-      #   run: |
-      #     echo '[defaults]' > ansible.cfg
-      #     echo 'host_key_checking = False' >> ansible.cfg 
+      - name: Create ansible.cfg
+        run: |
+          echo '[defaults]' > ansible.cfg
+          echo 'host_key_checking = False' >> ansible.cfg 
       - name: Install Middleware using Ansible
         run: |
           ansible-playbook -i inventory.yml ansible/rails_playbook.yaml
